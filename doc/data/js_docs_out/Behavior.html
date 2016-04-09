@@ -1,0 +1,815 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN""http://www.w3.org/TR/REC-html40/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>
+Behavior
+</TITLE>
+<LINK REL ="stylesheet" TYPE="text/css" HREF="stylesheet.css" TITLE="Style">
+</HEAD>
+<SCRIPT>
+function asd()
+{
+parent.document.title="Behavior";
+}
+</SCRIPT>
+<BODY BGCOLOR="white" onload="asd();">
+
+<!-- ========== START OF NAVBAR ========== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0">
+<TR>
+<TD COLSPAN=3 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">  <A HREF="overview-summary-main.js.html"><FONT CLASS="NavBarFont1"><B>File</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev">&nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <!--TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"-->    <!--A HREF="deprecated-list.html"--><!--FONT CLASS="NavBarFont1">Deprecated</FONT--><!--/A--><!--&nbsp;</TD-->
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="index-all.html"--><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+<B></B>
+</EM>
+</TD
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<B>PREV CLASS</B><!-- 
+   NEXT CLASS 
+-->
+&nbsp;<A HREF="BehaviorCookies.html"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="index.html" TARGET="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="" TARGET="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;
+<SCRIPT>
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="allclasses-noframe.html" TARGET=""><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+<A HREF="allclasses-noframe.html" TARGET=""><B>All Classes</B></A>
+</NOSCRIPT>
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<!-- =========== END OF NAVBAR =========== -->
+<HR>
+
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>Class Behavior</H2>
+<PRE>Object
+   |
+   +--<b>Behavior</b>
+</PRE>
+
+
+<HR>
+<DL>
+   <!-- Class definition -->
+   <DT>class 
+   <B>Behavior</B>
+   
+
+</DL>
+   
+   <P>
+   <BR/>Class that captures and sends user behavior to the server by ajax. Click count,
+ display time and amount of scrolling are observed. OnUnload event is fired
+ when user leaves current page, which is the time to send information about
+ user's behavior on that page. However, there are some issues with this event:
+<p>
+Opera doesn't fire onUnload when navigating to the same server (i.e. history
+navigation or page refreshing). There are two ways how to solve this.
+Either send behavior using ajax every certain amount of time (but make sure
+that displayCount is incremented just once - that's why displayCount is allways
+sent to the server as part of the behavior), or save behavior to cookies
+<a href="BehaviorCookies.html#">BehaviorCookies</a> and then ajax-send it just once when next page loads.
+Cookies are much better, this approach causes no extra requests to the server.
+<p>
+There is a third option (for Opera), to switch off fast history navigation by
+history.navigationMode = 'compatible' (http://www.opera.com/support/kb/view/827/).
+But using this as well as using other ways discussed in the article didn't
+really do anything (at least on my computer).
+<p>
+There is even a fourth solution that also doesn't work too well. DisplayCount
+can be counted even by the server. Then, if displayCount counted by javascript
+is smaller, it means onUnload wasn't fired a couple of times. Missing
+values can be counted from the difference, but this can't be generally
+precise and in worst case the page could be loaded from cache, which could
+cause the server's display count to be smaller (and it does happen).
+<p>
+The cookies solution works like this:
+Behavior is saved from cookies to database at the time of next page request.
+(which definitely is the very next request, because user stayed at the same
+server - otherwise unload would've been fired, behavior sent using ajax
+ and cookies deleted)
+<p>
+PHP cannot be used to read the cookies, because next page request (with
+the cookies) is sent BEFORE onUnload is fired. That means, if the browser
+fired onUnload and next page wasn't got from cache, behavior would be saved
+into database TWICE. That's why dealing with cookies can be done only with
+javascript when the next page is being loaded. This also solves afore-
+mentioned cache problem.
+<p>
+There is one more problem. With webkit (chrome, safari) ajax request never
+reach server when run in onUnload event AND user stays at the same domain.
+Don't know if this is an intended behavior or a bug, either way, server must
+deal with cookies at this situation because they are already deleted on the
+client side at the time of next page load. In case the page is fetched
+from cache (at this webkit situation), there is NO solution other than
+setting <a href="Behavior.html#SEND_INFO_OFTEN">Behavior.SEND_INFO_OFTEN</a> to true or, as a last resort, changing
+cache control. Someone may think that the problem could be solved by not
+deleting the cookies before ajax returns a reply from a server, which
+actually would work for webkit, but not for firefox, because it doesn't
+wait for an ajax reply during page unload (which makes sense after all), so
+that cookies wouldn't be deleted and behavior saved twice.
+<p>
+There are even more issues with browsers. Such as whenever a window has
+been ctrl-tabbed or alt-tabbed out and back, firefox doesn't fire onunload
+upon tab closing (ctrl-w), which must be a bug. Opera doesn't fire onUnload
+when it should much more often (upon tab closing, browser closing, ...)
+<p>
+As a consequence, <a href="Behavior.html#SEND_INFO_OFTEN">Behavior.SEND_INFO_OFTEN</a> is used for Opera implicitly.
+IE and Firefox should not make any problems. And Chrome and Safari are
+also OK, with the use of cookies.
+<p>
+EDIT: as onUnload makes so many problems, it's been decided to use only cookies
+to send the info. Their lifetime should be longer than just one session. That
+way no behavior will be lost, in worst case just uploaded later (when user
+opens the pages again). I resorted to this after all the issues with Opera or
+Chrome and after realizing that ratings recounting (which may take a bit longer)
+is done after sending the behavior and IE waits for whole operation to complete.
+And Firefox waits too, when re-refreshing again.
+
+ <BR/><I>Defined in <a href='overview-summary-main.js.html'>main.js</a></I><BR/><BR/>
+   </P>
+   
+   <HR>
+
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+
+<!-- ======== END NESTED CLASS SUMMARY ======== -->
+
+
+<!-- =========== FIELD SUMMARY =========== -->
+
+   <A NAME="field_summary"><!-- --></A>
+      <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+         <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+            <TD COLSPAN=2><FONT SIZE="+2">
+               <B>Field Summary</B></FONT></TD>
+         </TR>
+
+   <!-- This is one instance field summary -->
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#bookmarked">bookmarked</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether the page is saved to bookmarks.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#clickCount">clickCount</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Number of mouse clicks user does.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#COOKIES_INTERVAL">COOKIES_INTERVAL</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How often to save behavior cookies (in miliseconds).</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#cookiesTimer">cookiesTimer</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pointer to cookies saving interval function.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#displayTime">displayTime</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Total time the page has been focused.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#focused">focused</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether the window is focused right now.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#INFO_INTERVAL">INFO_INTERVAL</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;How often to send the info by ajax (in miliseconds).</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#infoBeenSent">infoBeenSent</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether behavior has been sent from this page.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#lastScrollTop">lastScrollTop</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last position of content in the window.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#MAX_DISPLAY_TIME">MAX_DISPLAY_TIME</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Maximum time user is expected to view the page.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#mouseMove">mouseMove</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Total amount of pixels user moved mouse by.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#productID">productID</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID of current product.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#scrollCount">scrollCount</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Total amount of pixels user scrolled by.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#SEND_INFO_OFTEN">SEND_INFO_OFTEN</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether to ajax-send behavior info in certain interval
+ <a href="Behavior.html#INFO_INTERVAL">Behavior.INFO_INTERVAL</a>.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#timeFocused">timeFocused</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Last time page was focused.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#USE_BEHAVIOR_COOKIES">USE_BEHAVIOR_COOKIES</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether to save behavior to cookies.</TD>
+   </TR>
+   
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+   <CODE>&nbsp;Object</CODE></FONT></TD>
+   <TD><CODE><B><A HREF="#USE_ONUNLOAD">USE_ONUNLOAD</A></B></CODE>
+   <BR>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Whether to send info when onUnload event is fired.</TD>
+   </TR>
+   
+
+   </TABLE>
+   &nbsp;
+   
+
+   
+
+<!-- =========== END FIELD SUMMARY =========== -->
+
+
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+
+<A NAME="constructor_summary"><!-- --></A>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TD COLSPAN=2><FONT SIZE="+2">
+<B>Constructor Summary</B></FONT></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+   <TD>
+      <CODE>
+	 <B>
+	    <A HREF="#Behavior()">Behavior</A></B>(productID)
+      </CODE>
+      <BR>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      
+      </TD>
+</TR>
+</TABLE>
+
+<!-- ======== END CONSTRUCTOR SUMMARY ======== -->
+
+&nbsp;
+
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TD COLSPAN=2><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TD>
+</TR>
+
+
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#countDisplayTime">countDisplayTime</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Counts <a href="Behavior.html#displayTime">Behavior.displayTime</a> from <a href="Behavior.html#focused">Behavior.focused</a>
+and <a href="Behavior.html#timeFocused">Behavior.timeFocused</a>.
+      </TD>
+   </TR>
+
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#sendInfo">sendInfo</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Sends behavior info to the server.
+      </TD>
+   </TR>
+
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#setBehaviorCookies">setBehaviorCookies</A></B>()
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Saves behavior into cookies.
+      </TD>
+   </TR>
+
+   <TR BGCOLOR="white" CLASS="TableRowColor">
+      <TD ALIGN="right" VALIGN="top" WIDTH="1%">
+	 <FONT SIZE="-1">
+	    <CODE>&lt;static&gt;&nbsp;void</CODE>
+	 </FONT>
+      </TD>
+      <TD>
+	 <CODE>
+	    <B>
+	       <A HREF="#!s!send">send</A></B>(&lt;<a href="object.html">json</a>&gt; behavior)
+	 </CODE>
+	 <BR>
+	 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	 Sends behavior to the server (using ajax)
+      </TD>
+   </TR>
+
+
+</TABLE>
+
+
+
+<P>
+<!-- ========== END METHOD SUMMARY =========== -->
+
+
+<!-- ============ FIELD DETAIL START =========== -->
+
+   <A NAME="field_detail"><!-- --></A>
+   <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+      <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+         <TD COLSPAN=1><FONT SIZE="+2"><B>Field Detail</B></FONT></TD>
+      </TR>
+   </TABLE>
+
+   
+   <A NAME="bookmarked"><!-- --></A>
+   <H3>bookmarked</H3>
+   <PRE>Object&nbsp;<B>bookmarked</B></PRE>
+   <UL>
+   Whether the page is saved to bookmarks. This is not used now, there
+  is no way to find this out using javascript.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="clickCount"><!-- --></A>
+   <H3>clickCount</H3>
+   <PRE>Object&nbsp;<B>clickCount</B></PRE>
+   <UL>
+   Number of mouse clicks user does.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="COOKIES_INTERVAL"><!-- --></A>
+   <H3>COOKIES_INTERVAL</H3>
+   <PRE>Object&nbsp;<B>COOKIES_INTERVAL</B></PRE>
+   <UL>
+   How often to save behavior cookies (in miliseconds).
+   
+   </UL>
+   <HR>
+   
+   <A NAME="cookiesTimer"><!-- --></A>
+   <H3>cookiesTimer</H3>
+   <PRE>Object&nbsp;<B>cookiesTimer</B></PRE>
+   <UL>
+   Pointer to cookies saving interval function.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="displayTime"><!-- --></A>
+   <H3>displayTime</H3>
+   <PRE>Object&nbsp;<B>displayTime</B></PRE>
+   <UL>
+   Total time the page has been focused.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="focused"><!-- --></A>
+   <H3>focused</H3>
+   <PRE>Object&nbsp;<B>focused</B></PRE>
+   <UL>
+   Whether the window is focused right now.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="INFO_INTERVAL"><!-- --></A>
+   <H3>INFO_INTERVAL</H3>
+   <PRE>Object&nbsp;<B>INFO_INTERVAL</B></PRE>
+   <UL>
+   How often to send the info by ajax (in miliseconds).
+   
+   </UL>
+   <HR>
+   
+   <A NAME="infoBeenSent"><!-- --></A>
+   <H3>infoBeenSent</H3>
+   <PRE>Object&nbsp;<B>infoBeenSent</B></PRE>
+   <UL>
+   Whether behavior has been sent from this page.
+  Used not to increment display count when behavior info is not sent
+  for the first time, so that this only makes sense when SEND_INFO_OFTEN
+  is set to true.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="lastScrollTop"><!-- --></A>
+   <H3>lastScrollTop</H3>
+   <PRE>Object&nbsp;<B>lastScrollTop</B></PRE>
+   <UL>
+   Last position of content in the window.
+ Used to count amount of scrolling.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="MAX_DISPLAY_TIME"><!-- --></A>
+   <H3>MAX_DISPLAY_TIME</H3>
+   <PRE>Object&nbsp;<B>MAX_DISPLAY_TIME</B></PRE>
+   <UL>
+   Maximum time user is expected to view the page. No bigger values are
+  sent to the server as behavior.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="mouseMove"><!-- --></A>
+   <H3>mouseMove</H3>
+   <PRE>Object&nbsp;<B>mouseMove</B></PRE>
+   <UL>
+   Total amount of pixels user moved mouse by. Not used now, because
+  mouse moving is not too relevant behavior. But maybe this would be able to
+  tell whether user really sits in front of PC and reads the page.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="productID"><!-- --></A>
+   <H3>productID</H3>
+   <PRE>Object&nbsp;<B>productID</B></PRE>
+   <UL>
+   ID of current product.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="scrollCount"><!-- --></A>
+   <H3>scrollCount</H3>
+   <PRE>Object&nbsp;<B>scrollCount</B></PRE>
+   <UL>
+   Total amount of pixels user scrolled by.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="SEND_INFO_OFTEN"><!-- --></A>
+   <H3>SEND_INFO_OFTEN</H3>
+   <PRE>Object&nbsp;<B>SEND_INFO_OFTEN</B></PRE>
+   <UL>
+   Whether to ajax-send behavior info in certain interval
+ <a href="Behavior.html#INFO_INTERVAL">Behavior.INFO_INTERVAL</a>.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="timeFocused"><!-- --></A>
+   <H3>timeFocused</H3>
+   <PRE>Object&nbsp;<B>timeFocused</B></PRE>
+   <UL>
+   Last time page was focused.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="USE_BEHAVIOR_COOKIES"><!-- --></A>
+   <H3>USE_BEHAVIOR_COOKIES</H3>
+   <PRE>Object&nbsp;<B>USE_BEHAVIOR_COOKIES</B></PRE>
+   <UL>
+   Whether to save behavior to cookies.
+  At least on of SEND_INFO_OFTEN or USE_BEHAVIOR_COOKIES should be used,
+  USE_BEHAVIOR_COOKIES is recommended.
+   
+   </UL>
+   <HR>
+   
+   <A NAME="USE_ONUNLOAD"><!-- --></A>
+   <H3>USE_ONUNLOAD</H3>
+   <PRE>Object&nbsp;<B>USE_ONUNLOAD</B></PRE>
+   <UL>
+   Whether to send info when onUnload event is fired.
+   
+   </UL>
+   <HR>
+   
+
+
+<!-- ============ FIELD DETAIL END =========== -->
+
+    <!-- ========= CONSTRUCTOR DETAIL START ======== -->
+
+<A NAME="constructor_detail"><!-- --></A>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+   <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+      <TD COLSPAN=1>
+      <FONT SIZE="+2"><B>Constructor Detail</B></FONT>
+      </TD>
+   </TR>
+</TABLE>
+
+<A NAME="Behavior()"><!-- --></A><H3>
+Behavior</H3>
+<PRE><B>Behavior</B>(productID)</PRE>
+
+
+
+
+   </UL>
+
+
+<!-- Constructor return value(s) -->
+
+<!-- End constructor return value(s) -->
+
+<!-- ADDITIONAL ATTRIBUTES -->
+
+<HR/>
+<!-- END ADDITIONAL ATTRIBUTES  -->
+
+<!-- ========= CONSTRUCTOR DETAIL END ======== -->
+
+
+<!-- ============ METHOD DETAIL START ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+   <TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+      <TD COLSPAN=1><FONT SIZE="+2">
+         <B>Method Detail</B></FONT>
+      </TD>
+   </TR>
+</TABLE>
+
+<!-- One single method detail entry -->
+
+   <A NAME="countDisplayTime"><!-- --></A>
+   <H3>countDisplayTime</H3>
+   <PRE>void <B>countDisplayTime</B>()</PRE>
+   
+      <UL>Counts <a href="Behavior.html#displayTime">Behavior.displayTime</a> from <a href="Behavior.html#focused">Behavior.focused</a>
+and <a href="Behavior.html#timeFocused">Behavior.timeFocused</a>. Maximum display time restriction is applied.</UL>
+   
+
+   <!-- METHOD PARAMETERS START -->
+   
+   <!-- METHOD PARAMETERS END -->
+
+   
+
+   <!-- ADDITIONAL ATTRIBUTES START -->
+   
+   <!-- ADDITIONAL ATTRIBUTES  END -->
+<HR>
+
+   <A NAME="sendInfo"><!-- --></A>
+   <H3>sendInfo</H3>
+   <PRE>void <B>sendInfo</B>()</PRE>
+   
+      <UL>Sends behavior info to the server. Also removes behavior cookies as they are
+ not needed when the behavior has already been sent.</UL>
+   
+
+   <!-- METHOD PARAMETERS START -->
+   
+   <!-- METHOD PARAMETERS END -->
+
+   
+
+   <!-- ADDITIONAL ATTRIBUTES START -->
+   
+   <!-- ADDITIONAL ATTRIBUTES  END -->
+<HR>
+
+   <A NAME="setBehaviorCookies"><!-- --></A>
+   <H3>setBehaviorCookies</H3>
+   <PRE>void <B>setBehaviorCookies</B>()</PRE>
+   
+      <UL>Saves behavior into cookies. Call this using the <a href="Behavior.html#cookiesTimer">Behavior.cookiesTimer</a>.</UL>
+   
+
+   <!-- METHOD PARAMETERS START -->
+   
+   <!-- METHOD PARAMETERS END -->
+
+   
+
+   <!-- ADDITIONAL ATTRIBUTES START -->
+   
+   <!-- ADDITIONAL ATTRIBUTES  END -->
+<HR>
+
+   <A NAME="!s!send"><!-- --></A>
+   <H3>send</H3>
+   <PRE>&lt;static&gt; void <B>send</B>(&lt;<a href="object.html">json</a>&gt; behavior)</PRE>
+   
+      <UL>Sends behavior to the server (using ajax)</UL>
+   
+
+   <!-- METHOD PARAMETERS START -->
+   
+   <UL>
+   <B>Parameters:</B>
+   
+     <UL><CODE>behavior</CODE> -  Behavior values that will be sent.    
+      </UL> 
+   
+   </UL>
+   
+   <!-- METHOD PARAMETERS END -->
+
+   
+
+   <!-- ADDITIONAL ATTRIBUTES START -->
+   
+   <!-- ADDITIONAL ATTRIBUTES  END -->
+<HR>
+
+
+
+<!-- ============ METHOD DETAIL END ========== -->
+
+<!-- ========= END OF CLASS DATA ========= -->
+
+<!-- ========== START OF NAVBAR ========== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0">
+<TR>
+<TD COLSPAN=3 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">  <A HREF="overview-summary-main.js.html"><FONT CLASS="NavBarFont1"><B>File</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="overview-tree.html"><FONT CLASS="NavBarFont1"><b>Tree</b></FONT></A>&nbsp;</TD>
+  <!--TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"-->    <!--A HREF="deprecated-list.html"--><!--FONT CLASS="NavBarFont1">Deprecated</FONT--><!--/A--><!--&nbsp;</TD-->
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="index-all.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+<B></B>
+</EM>
+</TD
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<B>PREV CLASS</B><!-- 
+   NEXT CLASS 
+-->
+&nbsp;<A HREF="BehaviorCookies.html"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="index.html" TARGET="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="" TARGET="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;
+<SCRIPT>
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="allclasses-noframe.html" TARGET=""><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+<A HREF="allclasses-noframe.html" TARGET=""><B>All Classes</B></A>
+</NOSCRIPT>
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+
+<!-- =========== END OF NAVBAR =========== -->
+
+<HR>
+<FONT SIZE="-1">
+
+</FONT>
+<div class="jsdoc_ctime">Documentation generated by <a href="http://jsdoc.sourceforge.net/" target="_parent">JSDoc</a> on Tue Aug  3 14:22:39 2010</div>
+</BODY>
+</HTML>
